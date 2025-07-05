@@ -1,0 +1,6 @@
+
+Add isTest variable to GameController.
+When isTest is set to true, 
+after the game is over and scores updated, 
+remove the user from SharedPref that when 
+the game is restarted new user will be created.
