@@ -110,12 +110,25 @@ class GameView extends GetView<GameController> {
                       mainAxisSpacing: 2,
                     ),
                     itemCount: LinesModel.gridSize * LinesModel.gridSize,
+                    // In the GridView.builder itemBuilder, modify to show the moving ball
                     itemBuilder: (context, index) {
                       final row = index ~/ LinesModel.gridSize;
                       final col = index % LinesModel.gridSize;
                       final ball = controller.grid[row][col];
                       final isSelected =
                           row == controller.selectedRow && col == controller.selectedCol;
+                          
+                      // Check if this cell is in the current animation path
+                      final isInPath = controller.isAnimating && 
+                          controller.currentPathIndex < controller.movePath.length &&
+                          controller.movePath[controller.currentPathIndex][0] == row &&
+                          controller.movePath[controller.currentPathIndex][1] == col;
+                          
+                      // If this cell is the current animation position, show the moving ball
+                      if (isInPath) {
+                        return _buildCell(controller.movingBall!, row, col, false);
+                      }
+                      
                       return _buildCell(ball, row, col, isSelected);
                     },
                   ),

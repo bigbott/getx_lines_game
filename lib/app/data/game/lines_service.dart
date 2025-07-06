@@ -237,4 +237,9 @@ class LinesService {
     }
     return emptyCount < 3; // Need at least 3 empty cells for next balls
   }
+  
+  // Method to expose the pathfinding grid
+  List<List<int>> getPathfindingGrid() {
+    return List.from(_pathfindingGrid);
+  }
 }
