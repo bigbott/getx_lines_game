@@ -4,12 +4,19 @@ import 'ez_glass_container.dart';
 import 'ez_gradient.dart';
 import 'ez_scale.dart';
 
-
 final class EzGlassGradientButton extends StatelessWidget {
   final Widget? child;
   final GestureTapCallback? onTap;
+  final double? width;
+  final double? height;
 
-  const EzGlassGradientButton({super.key, this.child, this.onTap});
+  const EzGlassGradientButton({
+    super.key,
+    this.child,
+    this.onTap,
+    this.width = double.infinity,
+    this.height = 60,
+  });
 
   @override
   Widget build(Object context) {
@@ -20,9 +27,10 @@ final class EzGlassGradientButton extends StatelessWidget {
             child: MouseRegion(
               cursor: SystemMouseCursors.click,
               child: EzGlassContainer(
-                child: Padding(
-                  padding: EdgeInsets.all(20),
-                  child: child,
+                child: SizedBox(
+                 width: width,
+                 height: height,
+                  child: Center(child: child),
                 ),
               ),
             )));
