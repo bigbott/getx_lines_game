@@ -16,17 +16,76 @@ final class LeaderboardService {
     databases = Databases(client);
   }
 
-  Future<DocumentList?> loadItems() async {
+  Future<DocumentList?> loadItems({int offset = 0, int limit = 20}) async {
     DocumentList? res;
     try {
       res = await databases.listDocuments(
         databaseId: AppwriteConstants.DB_ID,
         collectionId: AppwriteConstants.COLLECTION_ID,
+        queries: [
+          Query.orderDesc('rank'),
+          Query.limit(limit),
+          Query.offset(offset),
+        ],
       );
     } on AppwriteException catch (e) {
       print(e.message);
     }
     return res;
+  }
+
+  Future<DocumentList?> loadItemsAroundUser(String userId, {int limit = 20}) async {
+    try {
+      // First get user's position by counting documents with higher scores
+      final userDoc = await databases.listDocuments(
+        databaseId: AppwriteConstants.DB_ID,
+        collectionId: AppwriteConstants.COLLECTION_ID,
+        queries: [Query.equal('user_id', userId)],
+      );
+
+      if (userDoc.documents.isEmpty) return null;
+
+      final userScore = userDoc.documents.first.data['scores'] as int;
+      final higherScores = await databases.listDocuments(
+        databaseId: AppwriteConstants.DB_ID,
+        collectionId: AppwriteConstants.COLLECTION_ID,
+        queries: [Query.greaterThan('scores', userScore)],
+      );
+
+      // Get half of the limit for scores above and below
+      final halfLimit = limit ~/ 2;
+      
+      // Get players with higher scores
+      final higherPlayers = await databases.listDocuments(
+        databaseId: AppwriteConstants.DB_ID,
+        collectionId: AppwriteConstants.COLLECTION_ID,
+        queries: [
+          Query.orderDesc('scores'),
+          Query.limit(halfLimit),
+          Query.greaterThan('scores', userScore),
+        ],
+      );
+
+      // Get players with lower or equal scores
+      final lowerPlayers = await databases.listDocuments(
+        databaseId: AppwriteConstants.DB_ID,
+        collectionId: AppwriteConstants.COLLECTION_ID,
+        queries: [
+          Query.orderDesc('scores'),
+          Query.limit(halfLimit + 1), // +1 to include current user
+          Query.lessThanEqual('scores', userScore),
+        ],
+      );
+
+      // Combine the results
+       return DocumentList(
+         total: higherPlayers.total + lowerPlayers.total,
+         documents: [...higherPlayers.documents, ...lowerPlayers.documents],
+       );
+    } on AppwriteException catch (e) {
+      print(e.message);
+      return null;
+    }
   }
 
   Future<void> addItem(Map<String, dynamic> data) async {

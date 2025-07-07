@@ -1,23 +1,42 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:appwrite/models.dart';
+import 'package:getx_lines_game/app/data/leaderboard/leaderboard_service.dart';
+import 'package:getx_lines_game/common/localdb/shared_preferences.dart';
 
 class LeaderboardController extends GetxController {
-  //TODO: Implement LeaderboardController
+  final LeaderboardService leaderboardService;
+  DocumentList? players;
+  String? userId;
 
-  final count = 0.obs;
+  LeaderboardController({required this.leaderboardService});
+
   @override
   void onInit() {
     super.onInit();
+    userId = SharedPrefs.getUserId();
+    loadAroundUser();
   }
 
-  @override
-  void onReady() {
-    super.onReady();
+  Future<void> loadAroundUser() async {
+    if (userId == null) {
+      players = await leaderboardService.loadItems();
+      update();
+      return;
+    }
+    final aroundUserPlayers = await leaderboardService.loadItemsAroundUser(userId!);
+    if (aroundUserPlayers != null) {
+      players = aroundUserPlayers;
+      update();
+    }
   }
 
-  @override
-  void onClose() {
-    super.onClose();
+  Future<void> loadTopPlayers() async {
+    players = await leaderboardService.loadItems();
+    update();
   }
 
-  void increment() => count.value++;
+  bool isCurrentUser(Document player) {
+    return player.data['user_id'] == userId;
+  }
 }
