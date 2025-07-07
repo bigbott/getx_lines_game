@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'package:get/get.dart';
+import 'package:getx_lines_game/app/data/leaderboard/leaderboard_service.dart';
+import 'package:getx_lines_game/common/audio/audio_player.dart';
 import 'package:getx_lines_game/common/extensions/color_scheme.dart';
 import 'package:getx_lines_game/common/extensions/device_previewing.dart';
 import 'package:getx_lines_game/common/localdb/shared_preferences.dart';
@@ -25,4 +27,12 @@ void main() async{
         
         ).withDevicePreview(true),
   );
+}
+
+class InitialBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.putAsync<IAudioPlayer>(() => AudioPlayer().init());
+    Get.put(LeaderboardService());
+  }
 }
