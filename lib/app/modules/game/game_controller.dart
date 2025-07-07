@@ -28,7 +28,7 @@ class GameController extends GetxController with SingleGetTickerProviderMixin {
   String? userId;
   String? nickname;
   
-  bool isTest = true;
+  bool isTest = false;
 
   GameController(this._service, this._leaderboardService);
 
