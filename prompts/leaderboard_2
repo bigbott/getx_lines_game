@@ -1,0 +1,18 @@
+
+Create leaderboard view. 
+
+It should show the list of 20 players with 
+their scores.
+
+Add two elevated buttons at the bottom of the view: 
+Top players and Your position
+
+When leaderboard view is loaded, 
+fetch 20 players around current player. 
+
+Highlight current player in the list.
+
+When Top players pressed show first 20 players. 
+
+When your position is pressed show 20 players
+around current player again 

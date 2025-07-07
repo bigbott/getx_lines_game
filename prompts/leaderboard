@@ -1,0 +1,4 @@
+Create leaderboard view. 
+It shoudl display the infinitely scrollable 
+list of players with their sccores.
+Use infinite_scroll_pagination package
