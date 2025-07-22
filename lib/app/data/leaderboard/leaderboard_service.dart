@@ -6,6 +6,7 @@ final class LeaderboardService {
   late final Client client;
   late final Account account;
   late final Databases databases;
+  late final Functions functions;
 
   LeaderboardService() {
     client = Client()
@@ -14,6 +15,7 @@ final class LeaderboardService {
 
     account = Account(client);
     databases = Databases(client);
+    functions = Functions(client);
   }
 
   Future<DocumentList?> loadItems({int offset = 0, int limit = 20}) async {
@@ -23,7 +25,7 @@ final class LeaderboardService {
         databaseId: AppwriteConstants.DB_ID,
         collectionId: AppwriteConstants.COLLECTION_ID,
         queries: [
-          Query.orderDesc('rank'),
+          Query.orderAsc('rank'),
           Query.limit(limit),
           Query.offset(offset),
         ],
@@ -34,9 +36,9 @@ final class LeaderboardService {
     return res;
   }
 
-  Future<DocumentList?> loadItemsAroundUser(String userId, {int limit = 20}) async {
+  Future<DocumentList?> loadItemsAroundUser(String userId) async {
     try {
-      // First get user's position by counting documents with higher scores
+      // First get user's document to find their rank
       final userDoc = await databases.listDocuments(
         databaseId: AppwriteConstants.DB_ID,
         collectionId: AppwriteConstants.COLLECTION_ID,
@@ -45,43 +47,23 @@ final class LeaderboardService {
 
       if (userDoc.documents.isEmpty) return null;
 
-      final userScore = userDoc.documents.first.data['scores'] as int;
-      final higherScores = await databases.listDocuments(
-        databaseId: AppwriteConstants.DB_ID,
-        collectionId: AppwriteConstants.COLLECTION_ID,
-        queries: [Query.greaterThan('scores', userScore)],
-      );
+      final userRank = userDoc.documents.first.data['rank'] as int;
+      final minRank = (userRank - 7).clamp(1, double.infinity).toInt();
+      final maxRank = userRank + 10;
 
-      // Get half of the limit for scores above and below
-      final halfLimit = limit ~/ 2;
-      
-      // Get players with higher scores
-      final higherPlayers = await databases.listDocuments(
+      // Get all players within rank range
+      final players = await databases.listDocuments(
         databaseId: AppwriteConstants.DB_ID,
         collectionId: AppwriteConstants.COLLECTION_ID,
         queries: [
-          Query.orderDesc('scores'),
-          Query.limit(halfLimit),
-          Query.greaterThan('scores', userScore),
+          Query.between('rank', minRank, maxRank),
+          // Query.greaterThanEqual('rank', minRank),
+          // Query.lessThanEqual('rank', maxRank),
+          Query.orderAsc("rank")
         ],
       );
 
-      // Get players with lower or equal scores
-      final lowerPlayers = await databases.listDocuments(
-        databaseId: AppwriteConstants.DB_ID,
-        collectionId: AppwriteConstants.COLLECTION_ID,
-        queries: [
-          Query.orderDesc('scores'),
-          Query.limit(halfLimit + 1), // +1 to include current user
-          Query.lessThanEqual('scores', userScore),
-        ],
-      );
-
-      // Combine the results
-       return DocumentList(
-         total: higherPlayers.total + lowerPlayers.total,
-         documents: [...higherPlayers.documents, ...lowerPlayers.documents],
-       );
+      return players;
     } on AppwriteException catch (e) {
       print(e.message);
       return null;
@@ -100,7 +82,7 @@ final class LeaderboardService {
       print(e.message);
     }
   }
-  
+
   Future<String?> getUserDocumentId(String userId) async {
     try {
       final result = await databases.listDocuments(
@@ -108,7 +90,7 @@ final class LeaderboardService {
         collectionId: AppwriteConstants.COLLECTION_ID,
         queries: [Query.equal('user_id', userId)],
       );
-      
+
       if (result.documents.isNotEmpty) {
         return result.documents.first.$id;
       }
@@ -118,12 +100,30 @@ final class LeaderboardService {
       return null;
     }
   }
-  
+
+  Future<int> _calculateRank(int score) async {
+    try {
+      final higherScores = await databases.listDocuments(
+        databaseId: AppwriteConstants.DB_ID,
+        collectionId: AppwriteConstants.COLLECTION_ID,
+        queries: [Query.greaterThan('scores', score), Query.limit(1)],
+      );
+      return higherScores.total + 1; // Rank starts from 1
+    } on AppwriteException catch (e) {
+      print(e.message);
+      return 1; // Default to top rank if error occurs
+    }
+  }
+
   Future<void> updateUserScore(String userId, String nickname, int score) async {
     try {
       // Check if user already has a document
       final documentId = await getUserDocumentId(userId);
-      
+
+      int rank = await _calculateRank(score);
+
+      DateTime now = DateTime.now();
+
       if (documentId != null) {
         // Update existing document
         await databases.updateDocument(
@@ -134,6 +134,8 @@ final class LeaderboardService {
             'user_id': userId,
             'nickname': nickname,
             'scores': score,
+            'rank': rank,
+            'last_played': now,
           },
         );
       } else {
@@ -142,8 +144,36 @@ final class LeaderboardService {
           'user_id': userId,
           'nickname': nickname,
           'scores': score,
+          'rank': rank,
+          'last_played': now,
         });
       }
+
+      _updateRanksBelowUser(userId, score);
+    } on AppwriteException catch (e) {
+      print(e.message);
+    }
+  }
+
+  void _updateRanksBelowUser(String userId, int score) async {
+    try {
+      await _warmUpFunction();
+      String json =
+          '{"commandName": "update_rank", "data" : {"user_id": "$userId", "score":$score}}';
+
+      final execution = await functions.createExecution(
+          functionId: AppwriteConstants.FUNCTION_ID, body: json);
+      String responseJson = execution.responseBody;
+    } on AppwriteException catch (e) {
+      print(e.message);
+    }
+  }
+
+  _warmUpFunction() async {
+    try {
+      String json = '{"commandName": "warm_up", "data" : {} }';
+      await functions.createExecution(
+        functionId: AppwriteConstants.FUNCTION_ID, body: json);
     } on AppwriteException catch (e) {
       print(e.message);
     }

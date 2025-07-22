@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:getx_lines_game/app/routes/app_pages.dart';
+import 'package:getx_lines_game/common/ez/ez_glass_button.dart';
 import 'package:getx_lines_game/common/ez/ez_glass_gradient_button.dart';
 import 'package:getx_lines_game/common/ez/ez_text.dart';
 import '../../data/game/lines_model.dart';
@@ -150,18 +151,20 @@ class GameView extends GetView<GameController> {
                   ),
                 ),
               ),
-              EzGlassGradientButton(
+              EzGlassButton(
+                height: 40,
                 onTap: controller.startNewGame,
-                child: const Text('New Game', style: TextStyle(fontSize: 28)),
+                child: const Text('New Game', style: TextStyle(fontSize: 18)),
               ),
               // SizedBox(
               //   height: 30,
               // ),
-              EzGlassGradientButton(
+              EzGlassButton(
+                height: 40,
                 onTap: () {
                   Get.toNamed(Routes.LEADERBOARD);
                 },
-                child: const Text('Leaderboard', style: TextStyle(fontSize: 24)),
+                child: const Text('Leaderboard', style: TextStyle(fontSize: 18)),
               ),
             ],
           ),

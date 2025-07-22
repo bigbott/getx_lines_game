@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:getx_lines_game/common/ez/ez_glass_button.dart';
+import 'package:getx_lines_game/common/ez/ez_glass_gradient_button.dart';
+import 'package:getx_lines_game/common/ez/ez_spacing.dart';
 import 'package:getx_lines_game/common/ez/ez_text.dart';
 
 import 'leaderboard_controller.dart';
@@ -32,8 +35,11 @@ class LeaderboardView extends GetView<LeaderboardController> {
                     final isCurrentUser = controller.isCurrentUser(player);
                     return ListTile(
                       tileColor: isCurrentUser ? Colors.white12 : null,
-                      leading: EzText('${index + 1}', fontSize: 18,),
-                      title: EzText(player.data['nickname'] ?? 'Unknown', fontSize: 18,),
+                      leading: EzText(
+                        '${player.data['rank']}',
+                        fontSize: 18,
+                      ),
+                      title: _buildTitle('${player.data['nickname']}', isCurrentUser),
                       trailing: EzText(player.data['scores'].toString(), fontSize: 20),
                     );
                   },
@@ -42,27 +48,49 @@ class LeaderboardView extends GetView<LeaderboardController> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
+            padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              spacing: 20,
               children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: controller.loadTopPlayers,
-                    child: const Text('Top Players'),
-                  ),
+                EzGlassButton(
+                  height: 40,
+                  onTap: controller.loadTopPlayers,
+                  child: const EzText('Top Players', fontSize: 18),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: controller.loadAroundUser,
-                    child: const Text('Your Position'),
-                  ),
+                EzGlassButton(
+                  height: 40,
+                  onTap: controller.loadAroundUser,
+                  child: const EzText('Your Position', fontSize: 18),
                 ),
               ],
             ),
           ),
+          h50,
         ],
       ),
+    );
+  }
+
+  Widget _buildTitle(String? nickname, bool isCurrentUser) {
+    if (isCurrentUser) {
+      return Badge(
+        label: EzText(
+          'You'.tr,
+          fontSize: 16,
+        ),
+        backgroundColor: Colors.blueAccent.shade700,
+        alignment: Alignment.topCenter,
+        child: EzText(
+          nickname ?? 'Unknown',
+          fontSize: 18,
+        ),
+      );
+    }
+
+    return EzText(
+      nickname ?? 'Unknown',
+      fontSize: 18,
     );
   }
 }

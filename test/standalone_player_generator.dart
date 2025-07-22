@@ -65,7 +65,7 @@ class SimpleLeaderboardService {
         data: {
           'user_id': userId,
           'nickname': nickname,
-          'scores': score,
+          'score': score,
           'rank': rank,
         },
       );
@@ -86,7 +86,7 @@ Future<void> main() async {
 
   int score = 1200;
   int rank = 1;
-  for (int i = 0; i < 100; i++) {
+  for (int i = 0; i < 1100; i++) {
     try {
       final userId = UserIdGenerator.generateUserId();
       final nickname = NicknameGenerator.generate();
@@ -102,12 +102,12 @@ Future<void> main() async {
       print('Progress: $successCount/100');
       
       // Small delay to avoid overwhelming the API
-      await Future.delayed(Duration(milliseconds: 100));
+      await Future.delayed(Duration(milliseconds: 500));
     } catch (e) {
       print('Failed to add player ${i+1}: $e');
     }
   }
   
-  print('Finished generating players. Successfully added: $successCount/100');
+  print('Finished generating players. Successfully added: $successCount/1100');
   exit(0); // Ensure the program exits
 }

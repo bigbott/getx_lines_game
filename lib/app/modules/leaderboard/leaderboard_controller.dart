@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:appwrite/models.dart';
 import 'package:getx_lines_game/app/data/leaderboard/leaderboard_service.dart';
@@ -19,6 +18,8 @@ class LeaderboardController extends GetxController {
   }
 
   Future<void> loadAroundUser() async {
+    players = null;
+    update();
     if (userId == null) {
       players = await leaderboardService.loadItems();
       update();
@@ -32,6 +33,8 @@ class LeaderboardController extends GetxController {
   }
 
   Future<void> loadTopPlayers() async {
+    players = null;
+    update();
     players = await leaderboardService.loadItems();
     update();
   }
