@@ -4,7 +4,10 @@ import 'package:get/get.dart';
 import 'audio_assets.dart';
 
 abstract interface class IAudioPlayer {
-  void play(String key);
+  Future<IAudioPlayer> init();
+  void play(String key, {double volume = 1});
+  Future<SoundHandle> loop(String key, {double volume = 1});
+  void stop (SoundHandle handle);
   RxBool get initFinished;
 }
 
@@ -37,7 +40,15 @@ final class AudioPlayer implements IAudioPlayer {
   }
 
   @override
-  void play(String key) {
-    _soloud.play(sourceMap[key]!);
+  void play(String key, {double volume = 1}) {
+    _soloud.play(sourceMap[key]!, volume: volume);
+  }
+
+  Future<SoundHandle> loop(String key, {double volume = 1}) async{
+    return await _soloud.play(sourceMap[key]!, volume: volume, looping: true);
+  }
+
+  void stop (SoundHandle handle){
+    _soloud.stop(handle);
   }
 }

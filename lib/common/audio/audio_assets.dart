@@ -3,40 +3,84 @@ import 'dart:math';
 final class AudioAssets {
   AudioAssets._();
 
-  static const SHUFFLE1 = "shuffle1";
-  static const SHUFFLE2 = "shuffle2";
-  static const FLIP1 = "flip1";
-  static const FLIP2 = "flip2";
-  static const FLIP3 = "flip3";
-  static const FLIP4 = "flip4";
-  static const FLIP5 = "flip5";
-  static const FLIP6 = "flip6";
-  static const FLIP7 = "flip7";
-  static const FLIP8 = "flip8";
-  static const CANNOT_MOVE = "cannotmove";
-  static const COMPLETE = "complete";
-  static const VICTORY = "victory";
-  static const FIREWORKS = "fireworks";
+  static const ball_run = "ball_run";
+  static const ball_run2 = "ball_run2";
+  static const ball_tap = "ball_tap";
+  static const button_tap = "button_tap";
+  static const button_tap2 = "button_tap2";
+  static const cannotmove = "cannotmove";
+  static const complete = "complete";
+  static const tribal_drum = "tribal_drum";
+  static const awesome = "awesome";
+  static const good = "good";
+  static const good2 = "good2";
+  static const good3 = "good3";
+  static const great = "great";
+  static const great2 = "great2";
+   static const nice = "nice";
+  static const nice2 = "nice2";
+  static const unbelievable = "unbelievable";
+  static const unbelievable2 = "unbelievable2";
 
   static const assetMap = {
-    SHUFFLE1: 'assets/sounds/cards/shuffle/1.mp3',
-    SHUFFLE2: 'assets/sounds/cards/shuffle/2.mp3',
-    FLIP1: 'assets/sounds/cards/flip/1.mp3',
-    FLIP2: 'assets/sounds/cards/flip/2.mp3',
-    FLIP3: 'assets/sounds/cards/flip/3.mp3',
-    FLIP4: 'assets/sounds/cards/flip/4.mp3',
-    FLIP5: 'assets/sounds/cards/flip/5.mp3',
-    FLIP6: 'assets/sounds/cards/flip/6.mp3',
-    FLIP7: 'assets/sounds/cards/flip/7.mp3',
-    //  FLIP8: 'assets/sounds/cards/flip/8.mp3',
-    CANNOT_MOVE: 'assets/sounds/cards/put/1.mp3',
-    COMPLETE: 'assets/sounds/cards/complete.mp3',
-    VICTORY: 'assets/sounds/victory.mp3',
-    FIREWORKS: 'assets/sounds/fireworks.mp3',
+    ball_run: 'assets/sounds/effects/ball_run.mp3',
+    ball_run2: 'assets/sounds/effects/ball_run2.mp3',
+    ball_tap: 'assets/sounds/effects/ball_tap.mp3',
+    button_tap: 'assets/sounds/effects/button_tap.mp3',
+    button_tap2: 'assets/sounds/effects/button_tap2.mp3',
+    cannotmove: 'assets/sounds/effects/cannotmove.mp3',
+    complete: 'assets/sounds/effects/complete.mp3',
+    tribal_drum: 'assets/sounds/effects/tribal_drum.mp3',
+    awesome: 'assets/sounds/voices/awesome.mp3',
+      good: 'assets/sounds/voices/good.mp3',
+    good2: 'assets/sounds/voices/good2.mp3',
+    good3: 'assets/sounds/voices/good3.mp3',
+    great: 'assets/sounds/voices/great.mp3',
+    great2: 'assets/sounds/voices/great2.mp3',
+     nice: 'assets/sounds/voices/nice.mp3',
+    nice2: 'assets/sounds/voices/nice2.mp3',
+    unbelievable: 'assets/sounds/voices/unbelievable.mp3',
+    unbelievable2: 'assets/sounds/voices/unbelievable2.mp3',
   };
 
   static final random = Random();
-  static String getRandomFlipKey() {
-    return 'flip${random.nextInt(7) + 1}';
+  static String getRandomBallRun() {
+    if (random.nextInt(10) >= 5){
+      return ball_run;
+    }
+    return ball_run2;
+  }
+  static String getRandomButtonTap() {
+    if (random.nextInt(10) >= 5){
+      return button_tap;
+    }
+    return button_tap2;
+  }
+  static String getRandomGood() {
+    if (random.nextInt(10) >= 3){
+      return good;
+    }
+    if (random.nextInt(10) >= 6){
+      return good2;
+    }
+    return good3;
+  }
+   static String getRandomGreat() {
+    if (random.nextInt(10) >= 5){
+      return great;
+    }
+    return great2;
+  }
+  static String getRandomNice() {
+    if (random.nextInt(10) >= 5){
+      return nice;
+    }
+    return nice2;
+  }
+   static String getRandomUnbelievable() {
+    if (random.nextInt(10) >= 5){
+      return unbelievable;
+    }
+    return unbelievable2;
   }
 }
