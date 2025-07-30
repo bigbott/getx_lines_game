@@ -1,10 +1,18 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_soloud/flutter_soloud.dart';
 import 'package:get/get.dart';
+import 'package:getx_lines_game/app/data/appwrite_constants.dart';
 import 'package:getx_lines_game/app/data/game/lines_model.dart';
 import 'package:getx_lines_game/app/data/game/lines_service.dart';
 import 'package:getx_lines_game/app/data/leaderboard/leaderboard_service.dart';
+import 'package:getx_lines_game/app/data/stats/stats_service.dart';
+import 'package:getx_lines_game/app/data/value_locator.dart';
+import 'package:getx_lines_game/app/modules/game/widgets/tutorial_dialog.dart';
+import 'package:getx_lines_game/common/audio/audio_assets.dart';
+import 'package:getx_lines_game/common/audio/audio_player.dart';
+import 'package:getx_lines_game/common/ez/ez_text.dart';
 import 'package:getx_lines_game/common/localdb/shared_preferences.dart';
 import 'package:getx_lines_game/common/utils/nickname_generator.dart';
 import 'package:getx_lines_game/common/utils/userid_generator.dart';
@@ -12,7 +20,9 @@ import 'package:getx_lines_game/common/utils/userid_generator.dart';
 class GameController extends GetxController with SingleGetTickerProviderMixin {
   final LinesService _service;
   final LeaderboardService _leaderboardService;
-  LinesModel _model = LinesModel();
+  final StatsService _statsService;
+  final IAudioPlayer _audioPlayer;
+  LinesModel _state = LinesModel();
 
   int bestScore = 0;
   int topScore = 0;
@@ -29,12 +39,17 @@ class GameController extends GetxController with SingleGetTickerProviderMixin {
 
   bool isTest = true;
 
-  GameController(this._service, this._leaderboardService);
+  GameController(
+      this._service, this._leaderboardService, this._statsService, this._audioPlayer);
 
-  LinesModel get model => _model;
-  List<List<Ball>> get grid => _model.grid;
-  List<Ball> get nextBalls => _model.nextBalls;
-  int get score => _model.score;
+  LinesModel get model => _state;
+  List<List<Ball>> get grid => _state.grid;
+  List<Ball> get nextBalls => _state.nextBalls;
+  int get score => _state.score;
+
+  bool isGameOver = false;
+
+  SoundHandle? loopHandle;
 
   @override
   void onInit() async {
@@ -51,7 +66,7 @@ class GameController extends GetxController with SingleGetTickerProviderMixin {
 
     // If in test mode, remove user data from SharedPrefs
     if (isTest) {
-     await _removeUserData();
+      await _removeUserData();
     }
 
     await _initializeUser();
@@ -64,37 +79,40 @@ class GameController extends GetxController with SingleGetTickerProviderMixin {
     nickname = SharedPrefs.getNickname();
 
     if (userId == null || nickname == null) {
+      Get.dialog(const TutorialDialog());
       userId = UserIdGenerator.generateUserId();
       print('userId: ' + userId!);
       nickname = NicknameGenerator.generate();
 
       await SharedPrefs.setUserId(userId!);
       await SharedPrefs.setNickname(nickname!);
+      await _leaderboardService.addPlayer(VL.find(VL.COLLECTION_ID), userId!, nickname!, 0);
     }
   }
 
   void startNewGame() {
-    _model.clear();
+    _state.clear();
     _generateNextBalls();
     _placeBalls();
+    isGameOver = false;
     update();
   }
 
   void _generateNextBalls() {
-    _service.generateNextBalls(_model, 3);
+    _service.generateNextBalls(_state, 3);
   }
 
   bool _placeBalls() {
-    bool hasLines = _service.placeBalls(_model);
+    bool hasLines = _service.placeBalls(_state).hasLines;
     // Always generate next balls if the game is not over, regardless of whether lines were formed
-    if (!_service.isGameOver(_model)) {
+    if (!_service.isGameOver(_state)) {
       _generateNextBalls();
     }
     return hasLines;
   }
 
   void onCellTap(int row, int col) {
-    if (_model.grid[row][col].isEmpty) {
+    if (_state.grid[row][col].isEmpty) {
       if (selectedBall != null && selectedRow != null && selectedCol != null) {
         _tryMove(row, col);
       }
@@ -104,7 +122,7 @@ class GameController extends GetxController with SingleGetTickerProviderMixin {
     update();
   }
 
-  void _selectBall(int row, int col) {
+  void _selectBall(int row, int col) async {
     // If there's already a selected ball, deselect it
     if (selectedRow != null && selectedCol != null) {
       // If clicking the same ball, deselect it
@@ -112,14 +130,21 @@ class GameController extends GetxController with SingleGetTickerProviderMixin {
         selectedBall = null;
         selectedRow = null;
         selectedCol = null;
+        _audioPlayer.stop(loopHandle!);
         return;
       }
     }
 
-    if (!_model.grid[row][col].isEmpty) {
-      selectedBall = _model.grid[row][col];
+    if (!_state.grid[row][col].isEmpty) {
+      selectedBall = _state.grid[row][col];
       selectedRow = row;
       selectedCol = col;
+      if (loopHandle != null) {
+        _audioPlayer.stop(loopHandle!);
+      }
+      loopHandle = await _audioPlayer.loop(
+        AudioAssets.ball_tap,
+      );
     }
   }
 
@@ -134,14 +159,16 @@ class GameController extends GetxController with SingleGetTickerProviderMixin {
   void _tryMove(int toRow, int toCol) {
     if (selectedRow == null || selectedCol == null) return;
 
-    if (_service.canMove(_model, selectedRow!, selectedCol!, toRow, toCol)) {
+    if (_service.canMove(_state, selectedRow!, selectedCol!, toRow, toCol)) {
+      _audioPlayer.stop(loopHandle!);
+      _audioPlayer.play(AudioAssets.ball_run);
       // Get the path from service
       movePath = _getPath(selectedRow!, selectedCol!, toRow, toCol);
 
       if (movePath.isNotEmpty) {
         // Start animation
-        movingBall = _model.grid[selectedRow!][selectedCol!];
-        _model.grid[selectedRow!][selectedCol!] = Ball(); // Clear original position
+        movingBall = _state.grid[selectedRow!][selectedCol!];
+        _state.grid[selectedRow!][selectedCol!] = Ball(); // Clear original position
         currentPathIndex = 0;
         isAnimating = true;
 
@@ -154,17 +181,20 @@ class GameController extends GetxController with SingleGetTickerProviderMixin {
         update(); // Update UI to show initial state
         return; // Exit early, we'll complete the move after animation
       }
+    } else {
+     // _audioPlayer.stop(loopHandle!);
+      _audioPlayer.play(AudioAssets.cannotmove);
     }
 
     // Clear selection if no animation started
-    selectedBall = null;
-    selectedRow = null;
-    selectedCol = null;
+   // selectedBall = null;
+   // selectedRow = null;
+   // selectedCol = null;
     update();
   }
 
   // Add this method to animate along the path
-  void _animateAlongPath() {
+  void _animateAlongPath() async {
     if (currentPathIndex >= movePath.length) {
       // Animation complete
       moveTimer?.cancel();
@@ -172,26 +202,52 @@ class GameController extends GetxController with SingleGetTickerProviderMixin {
 
       // Place ball at final position
       final destination = movePath.last;
-      _model.grid[destination[0]][destination[1]] = movingBall!;
+      _state.grid[destination[0]][destination[1]] = movingBall!;
 
       // Check for lines and place new balls if needed
-      bool hasLines = _service.checkLines(_model);
+      var result = _service.checkLines(_state);
+      bool hasLines = result.hasLines;
+      int removedCount = result.removedCount;
+      if (removedCount > 0){
+        _audioPlayer.play(AudioAssets.complete);
+        if (removedCount == 6){
+          _audioPlayer.play(AudioAssets.getRandomGood());
+        }
+        if (removedCount == 7){
+          _audioPlayer.play(AudioAssets.getRandomNice());
+        }
+        if (removedCount == 8){
+          _audioPlayer.play(AudioAssets.getRandomGreat());
+        }
+        if (removedCount == 9){
+          _audioPlayer.play(AudioAssets.awesome);
+        }
+        if (removedCount == 10){
+          _audioPlayer.play(AudioAssets.getRandomUnbelievable());
+        }
+      }
       if (!hasLines) {
         hasLines = _placeBalls();
       }
 
       // Check game over
-      if (_service.isGameOver(_model)) {
-        if (_model.score > bestScore) {
-          bestScore = _model.score;
+      if (_service.isGameOver(_state)) {
+        if (_state.score > bestScore) {
+          bestScore = _state.score;
           _updateLeaderboard();
         }
 
-        Get.snackbar(
-          'Game Over',
-          'Your score: ${_model.score}\nBest score: $bestScore',
-          duration: const Duration(seconds: 3),
+        Get.dialog(
+          AlertDialog(
+              content: EzText(
+            'GAME OVER'.tr,
+            color: Colors.white,
+            fontSize: 40,
+          )),
         );
+        isGameOver = true;
+        await Future.delayed(Duration(seconds: 2));
+        Get.back();
       }
 
       // Clear animation state
@@ -216,7 +272,7 @@ class GameController extends GetxController with SingleGetTickerProviderMixin {
   // Add this method to extract path from pathfinding grid
   List<List<int>> _getPath(int startRow, int startCol, int endRow, int endCol) {
     // First make sure we can find a path
-    if (!_service.canMove(_model, startRow, startCol, endRow, endCol)) {
+    if (!_service.canMove(_state, startRow, startCol, endRow, endCol)) {
       return [];
     }
 
@@ -245,7 +301,7 @@ class GameController extends GetxController with SingleGetTickerProviderMixin {
         int newRow = currentRow + dir[0];
         int newCol = currentCol + dir[1];
 
-        if (_model.isValidPosition(newRow, newCol) &&
+        if (_state.isValidPosition(newRow, newCol) &&
             grid[newRow][newCol] == currentValue - 1) {
           currentRow = newRow;
           currentCol = newCol;
@@ -271,20 +327,13 @@ class GameController extends GetxController with SingleGetTickerProviderMixin {
 
   Future<void> _loadScores() async {
     try {
-      final scores = await _leaderboardService.loadItems();
-      if (scores != null) {
-        for (var doc in scores.documents) {
-          if (doc.data['user_id'] == userId) {
-            bestScore = doc.data['score'] ?? 0;
-          }
-          if ((doc.data['scores'] ?? 0) > topScore) {
-            topScore = doc.data['score'];
-          }
-        }
-      }
+      bestScore =
+          await _leaderboardService.getUserScore(AppwriteConstants.COLLECTION_ID_7X7, userId!);
+      update();
+      topScore = await _leaderboardService.getTopScore(AppwriteConstants.COLLECTION_ID_7X7);
       update();
     } catch (e) {
-      print('Error loading scores: $e');
+      print('Error loading score: $e');
     }
   }
 
@@ -292,6 +341,7 @@ class GameController extends GetxController with SingleGetTickerProviderMixin {
     try {
       // Use the new method to update user score only if it's higher than previous best
       await _leaderboardService.updateUserScore(
+        AppwriteConstants.COLLECTION_ID_7X7,
         userId!,
         nickname!,
         bestScore,
