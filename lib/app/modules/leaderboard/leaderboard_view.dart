@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:getx_lines_game/common/ez/ez_glass_button.dart';
-import 'package:getx_lines_game/common/ez/ez_glass_gradient_button.dart';
 import 'package:getx_lines_game/common/ez/ez_spacing.dart';
 import 'package:getx_lines_game/common/ez/ez_text.dart';
 
@@ -19,6 +18,34 @@ class LeaderboardView extends GetView<LeaderboardController> {
       ),
       body: Column(
         children: [
+          h12,
+          Container(
+            color: Colors.black12,
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Expanded(
+                      child: EzText(
+                    'Nickname'.tr,
+                    color: Colors.white70,
+                    fontSize: 18,
+                  )),
+                  SizedBox(width: 65, child: EzText(
+                    'Rank'.tr,
+                    color: Colors.white70,
+                    fontSize: 18,
+                  ) ,),
+                  SizedBox(width: 65, child: EzText(
+                    'Score'.tr,
+                    color: Colors.white70,
+                    fontSize: 18,
+                  ) ,)
+                ],
+              ),
+            ),
+          ),
           Expanded(
             child: GetBuilder<LeaderboardController>(
               builder: (controller) {
@@ -35,12 +62,23 @@ class LeaderboardView extends GetView<LeaderboardController> {
                     final isCurrentUser = controller.isCurrentUser(player);
                     return ListTile(
                       tileColor: isCurrentUser ? Colors.white12 : null,
-                      leading: EzText(
-                        '${player.data['rank']}',
-                        fontSize: 18,
+                      onTap: () {
+                        controller.showStats(player);
+                      },
+                      title: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        spacing: 10,
+                        children: [
+                          Expanded(
+                              child: _buildTitle('${player.data['nickname']}', isCurrentUser)),
+                          SizedBox(
+                              width: 60,
+                              child: EzText(player.data['rank'].toString(), fontSize: 20)),
+                          SizedBox(
+                              width: 60,
+                              child: EzText(player.data['score'].toString(), fontSize: 20)),
+                        ],
                       ),
-                      title: _buildTitle('${player.data['nickname']}', isCurrentUser),
-                      trailing: EzText(player.data['scores'].toString(), fontSize: 20),
                     );
                   },
                 );

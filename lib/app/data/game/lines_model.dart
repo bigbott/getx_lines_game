@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:getx_lines_game/app/data/value_locator.dart';
 
 enum BallColor {
   red,
   green,
   blue,
   yellow,
+  pink,
+  black,
   none
 }
 
@@ -18,13 +21,17 @@ class Ball {
   Color get displayColor {
     switch (color) {
       case BallColor.red:
-        return Colors.red;
+        return Colors.red.shade500;
       case BallColor.green:
-        return Colors.green;
+        return Colors.green.shade700;
       case BallColor.blue:
-        return Colors.blue;
+        return Colors.blue.shade700;
       case BallColor.yellow:
-        return Colors.yellow;
+        return Colors.yellow.shade900;
+       case BallColor.pink:
+        return Colors.pink.shade900;
+      case BallColor.black:
+        return Colors.black54;  
       case BallColor.none:
         return Colors.transparent;
     }
@@ -32,7 +39,9 @@ class Ball {
 }
 
 class LinesModel {
-  static const int gridSize = 7;
+  //static const int gridSize = 7;
+  static final int gridWidth = VL.find(VL.GRID_WIDTH);
+  static final int gridHeight =  VL.find(VL.GRID_HEIGHT);
   static const int minLineLength = 5;
   
   List<List<Ball>> grid;
@@ -41,9 +50,9 @@ class LinesModel {
   
   LinesModel()
       : grid = List.generate(
-          gridSize,
+          gridWidth,
           (i) => List.generate(
-            gridSize,
+            gridHeight,
             (j) => Ball(),
           ),
         ),
@@ -51,7 +60,7 @@ class LinesModel {
         score = 0;
 
   bool isValidPosition(int row, int col) {
-    return row >= 0 && row < gridSize && col >= 0 && col < gridSize;
+    return row >= 0 && row < gridWidth && col >= 0 && col < gridHeight;
   }
 
   bool isCellEmpty(int row, int col) {
@@ -60,9 +69,9 @@ class LinesModel {
 
   void clear() {
     grid = List.generate(
-      gridSize,
+      gridWidth,
       (i) => List.generate(
-        gridSize,
+        gridHeight,
         (j) => Ball(),
       ),
     );

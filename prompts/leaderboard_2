@@ -2,7 +2,7 @@
 Create leaderboard view. 
 
 It should show the list of 20 players with 
-their scores.
+their score.
 
 Add two elevated buttons at the bottom of the view: 
 Top players and Your position

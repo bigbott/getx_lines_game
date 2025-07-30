@@ -9,12 +9,12 @@ class LinesService {
 
   void _initPathfinding() {
     _visited = List.generate(
-      LinesModel.gridSize,
-      (i) => List.generate(LinesModel.gridSize, (j) => false),
+      LinesModel.gridWidth,
+      (i) => List.generate(LinesModel.gridHeight, (j) => false),
     );
     _pathfindingGrid = List.generate(
-      LinesModel.gridSize,
-      (i) => List.generate(LinesModel.gridSize, (j) => -1),
+      LinesModel.gridWidth,
+      (i) => List.generate(LinesModel.gridHeight, (j) => -1),
     );
   }
 
@@ -32,14 +32,14 @@ class LinesService {
     model.nextBalls = List.generate(count, (index) => Ball(color: _getRandomColor()));
   }
 
-  bool placeBalls(LinesModel model) {
-    if (model.nextBalls.isEmpty) return true;
+  ({bool hasLines,  int removedCount}) placeBalls(LinesModel model) {
+    if (model.nextBalls.isEmpty) return (hasLines:true, removedCount: 0);
 
     for (var ball in model.nextBalls) {
       bool placed = false;
       while (!placed) {
-        int row = _random.nextInt(LinesModel.gridSize);
-        int col = _random.nextInt(LinesModel.gridSize);
+        int row = _random.nextInt(LinesModel.gridWidth);
+        int col = _random.nextInt(LinesModel.gridHeight);
         
         if (model.isCellEmpty(row, col)) {
           model.grid[row][col] = ball;
@@ -102,22 +102,22 @@ class LinesService {
     return false;
   }
 
-  bool checkLines(LinesModel model) {
+  ({bool hasLines, int removedCount}) checkLines(LinesModel model) {
     bool hasLines = false;
     List<List<bool>> toRemove = List.generate(
-      LinesModel.gridSize,
-      (i) => List.generate(LinesModel.gridSize, (j) => false),
+      LinesModel.gridWidth,
+      (i) => List.generate(LinesModel.gridHeight, (j) => false),
     );
 
     // Check horizontal lines
-    for (int row = 0; row < LinesModel.gridSize; row++) {
-      for (int col = 0; col <= LinesModel.gridSize - LinesModel.minLineLength; col++) {
+    for (int row = 0; row < LinesModel.gridWidth; row++) {
+      for (int col = 0; col <= LinesModel.gridHeight - LinesModel.minLineLength; col++) {
         if (model.grid[row][col].isEmpty) continue;
         
         int length = 1;
         BallColor color = model.grid[row][col].color;
         
-        for (int k = 1; k < LinesModel.gridSize - col; k++) {
+        for (int k = 1; k < LinesModel.gridHeight - col; k++) {
           if (model.grid[row][col + k].color == color) {
             length++;
           } else {
@@ -135,14 +135,14 @@ class LinesService {
     }
 
     // Check vertical lines
-    for (int col = 0; col < LinesModel.gridSize; col++) {
-      for (int row = 0; row <= LinesModel.gridSize - LinesModel.minLineLength; row++) {
+    for (int col = 0; col < LinesModel.gridHeight; col++) {
+      for (int row = 0; row <= LinesModel.gridWidth - LinesModel.minLineLength; row++) {
         if (model.grid[row][col].isEmpty) continue;
         
         int length = 1;
         BallColor color = model.grid[row][col].color;
         
-        for (int k = 1; k < LinesModel.gridSize - row; k++) {
+        for (int k = 1; k < LinesModel.gridWidth - row; k++) {
           if (model.grid[row + k][col].color == color) {
             length++;
           } else {
@@ -160,14 +160,14 @@ class LinesService {
     }
 
     // Check diagonal lines (top-left to bottom-right)
-    for (int row = 0; row <= LinesModel.gridSize - LinesModel.minLineLength; row++) {
-      for (int col = 0; col <= LinesModel.gridSize - LinesModel.minLineLength; col++) {
+    for (int row = 0; row <= LinesModel.gridWidth - LinesModel.minLineLength; row++) {
+      for (int col = 0; col <= LinesModel.gridHeight - LinesModel.minLineLength; col++) {
         if (model.grid[row][col].isEmpty) continue;
         
         int length = 1;
         BallColor color = model.grid[row][col].color;
         
-        for (int k = 1; k < math.min(LinesModel.gridSize - row, LinesModel.gridSize - col); k++) {
+        for (int k = 1; k < math.min(LinesModel.gridWidth - row, LinesModel.gridHeight - col); k++) {
           if (model.grid[row + k][col + k].color == color) {
             length++;
           } else {
@@ -185,14 +185,14 @@ class LinesService {
     }
 
     // Check diagonal lines (top-right to bottom-left)
-    for (int row = 0; row <= LinesModel.gridSize - LinesModel.minLineLength; row++) {
-      for (int col = LinesModel.minLineLength - 1; col < LinesModel.gridSize; col++) {
+    for (int row = 0; row <= LinesModel.gridWidth - LinesModel.minLineLength; row++) {
+      for (int col = LinesModel.minLineLength - 1; col < LinesModel.gridHeight; col++) {
         if (model.grid[row][col].isEmpty) continue;
         
         int length = 1;
         BallColor color = model.grid[row][col].color;
         
-        for (int k = 1; k < math.min(LinesModel.gridSize - row, col + 1); k++) {
+        for (int k = 1; k < math.min(LinesModel.gridWidth - row, col + 1); k++) {
           if (model.grid[row + k][col - k].color == color) {
             length++;
           } else {
@@ -210,26 +210,30 @@ class LinesService {
     }
 
     // Remove matched balls and update score
+    int removedCount = 0;
     if (hasLines) {
-      int removedCount = 0;
-      for (int i = 0; i < LinesModel.gridSize; i++) {
-        for (int j = 0; j < LinesModel.gridSize; j++) {
+      
+      for (int i = 0; i < LinesModel.gridWidth; i++) {
+        for (int j = 0; j < LinesModel.gridHeight; j++) {
           if (toRemove[i][j]) {
             model.grid[i][j] = Ball();
             removedCount++;
           }
         }
       }
-      model.score += removedCount * 10;
+      int scoreIncrement = calculateScoreIncrement(removedCount);
+      
+      model.score += removedCount * scoreIncrement;
     }
+    print("Final removedCount: $removedCount");
 
-    return hasLines;
+    return  ( hasLines:hasLines,  removedCount:removedCount);
   }
 
   bool isGameOver(LinesModel model) {
     int emptyCount = 0;
-    for (int i = 0; i < LinesModel.gridSize; i++) {
-      for (int j = 0; j < LinesModel.gridSize; j++) {
+    for (int i = 0; i < LinesModel.gridWidth; i++) {
+      for (int j = 0; j < LinesModel.gridHeight; j++) {
         if (model.isCellEmpty(i, j)) {
           emptyCount++;
         }
@@ -241,5 +245,24 @@ class LinesService {
   // Method to expose the pathfinding grid
   List<List<int>> getPathfindingGrid() {
     return List.from(_pathfindingGrid);
+  }
+  
+  int calculateScoreIncrement(int removedCount) {
+    if (removedCount == 6){
+      return 11;
+    }
+     if (removedCount == 7){
+      return 12;
+    }
+    if (removedCount == 8){
+      return 13;
+    }
+    if (removedCount == 9){
+      return 14;
+    }
+    if (removedCount == 10){
+      return 15;
+    }
+    return 10;
   }
 }

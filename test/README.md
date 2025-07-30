@@ -1,7 +1,7 @@
 # Player Generator for GetX Lines Game
 
 ## Overview
-This directory contains scripts to generate random players with scores for the leaderboard in the GetX Lines Game.
+This directory contains scripts to generate random players with score for the leaderboard in the GetX Lines Game.
 
 ## Files
 - `player_generator.dart` - The original player generator script (requires Flutter project dependencies)
@@ -31,7 +31,7 @@ The script will:
 1. Generate 100 random players with:
    - Unique user IDs
    - Random nicknames (adjective + animal format)
-   - Random scores between 0 and 9999
+   - Random score between 0 and 9999
 2. Save each player to the Appwrite database
 3. Display progress as it runs
 

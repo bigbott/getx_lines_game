@@ -53,3 +53,6 @@ app.*.map.json
 .trae/.ignore
 pubspec.lock
 /lib/app/data/leaderboard/appwrite_constants.dart
+analysis_options.yaml
+analysis_options.yaml
+.gitignore

@@ -4,3 +4,4 @@ analyzer:
     prefer_interpolation_to_compose_strings: ignore
     prefer_final_fields: ignore
     constant_identifier_names: ignore
+    non_constant_identifier_names: ignore

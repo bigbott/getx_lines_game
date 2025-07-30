@@ -37,7 +37,7 @@ final class EzScaleOnTap extends StatefulWidget {
   final Widget child;
   final  GestureTapCallback? onTap;
 
-  const EzScaleOnTap({super.key,  this.diff = 0.05, required this.child, this.onTap});
+  const EzScaleOnTap({super.key,  this.diff = -0.05, required this.child, this.onTap});
 
   @override
   State<StatefulWidget> createState() {

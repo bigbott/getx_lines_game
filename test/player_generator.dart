@@ -66,7 +66,7 @@ class SimpleLeaderboardService {
         data: {
           'user_id': userId,
           'nickname': nickname,
-          'scores': score,
+          'score': score,
         },
       );
       print('Added player: $nickname with score $score');

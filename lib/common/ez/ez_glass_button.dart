@@ -24,6 +24,7 @@ final class EzGlassButton extends StatelessWidget {
         child: MouseRegion(
           cursor: SystemMouseCursors.click,
           child: EzGlassContainer(
+            width: width,
             child: SizedBox(
              width: width,
              height: height,

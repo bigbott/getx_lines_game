@@ -2,6 +2,6 @@
 1. Inject LeaderboardService into GameController
 
 The Appwrite collection attributes:
-user_id, nickname, scores
+user_id, nickname, score
 
 2. Show Users best score and Top score on game view
