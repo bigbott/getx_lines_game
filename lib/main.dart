@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'package:get/get.dart';
@@ -19,6 +18,9 @@ void main() async{
         initialRoute: AppPages.INITIAL,
         getPages: AppPages.routes,
         debugShowCheckedModeBanner: false,
+      //  debugShowMaterialGrid: true,
+      checkerboardOffscreenLayers: true,
+      
         theme: ThemeData(
           colorScheme: ColorScheme.dark().fromSurface(
           //  Color.lerp(Colors.green.shade900, Colors.black, 0.5)!,
